@@ -1,21 +1,29 @@
-document.getElementById("capture").addEventListener("click", async () => {
-  try {
-    const [tab] = await chrome.tabs.query({
-      active: true,
-      currentWindow: true,
-    });
-    const screenshotUrl = await chrome.tabs.captureVisibleTab(tab.windowId, {
-      format: "png",
-    });
-    const img = document.getElementById("screenshot");
-    img.src = screenshotUrl;
-  } catch (err) {
-    console.error("Screenshot failed:", err);
-  }
-});
-
 const img = document.getElementById("screenshot");
 const overlay = document.getElementById("overlay");
+const fileInput = document.getElementById("fileInput");
+const uploadBtn = document.getElementById("upload");
+
+document.getElementById("capture").addEventListener("click", async () => {
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  const screenshotUrl = await chrome.tabs.captureVisibleTab(tab.windowId, {
+    format: "png",
+  });
+  img.src = screenshotUrl;
+});
+
+// Handle file upload
+uploadBtn.addEventListener("click", () => fileInput.click());
+
+fileInput.addEventListener("change", (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+});
 
 let isDragging = false;
 let startX = 0;
@@ -23,36 +31,10 @@ let startY = 0;
 let currentX = 0;
 let currentY = 0;
 
-function getImageOffsets(img) {
-  // Calculates offset caused by object-fit: contain
-  const container = img.getBoundingClientRect();
-  const imgAspect = img.naturalWidth / img.naturalHeight;
-  const containerAspect = container.width / container.height;
-
-  let renderWidth, renderHeight, offsetX, offsetY;
-
-  if (imgAspect > containerAspect) {
-    // Image is wider
-    renderWidth = container.width;
-    renderHeight = container.width / imgAspect;
-    offsetX = 0;
-    offsetY = (container.height - renderHeight) / 2;
-  } else {
-    // Image is taller
-    renderHeight = container.height;
-    renderWidth = container.height * imgAspect;
-    offsetX = (container.width - renderWidth) / 2;
-    offsetY = 0;
-  }
-
-  return { renderWidth, renderHeight, offsetX, offsetY };
-}
-
 img.addEventListener("mousedown", (e) => {
   if (!img.complete || img.naturalWidth === 0) return;
   isDragging = true;
 
-  const rect = img.getBoundingClientRect();
   startX = e.offsetX;
   startY = e.offsetY;
 
@@ -123,6 +105,7 @@ function getTopColors(data) {
       g = data[i + 1],
       b = data[i + 2];
     const brightness = (r + g + b) / 3;
+    // Lightly filter near black, white, and gray
     if (
       brightness > 240 ||
       brightness < 20 ||
