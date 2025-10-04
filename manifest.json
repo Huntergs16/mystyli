@@ -1,0 +1,17 @@
+{
+  "manifest_version": 3,
+  "name": "mystyli",
+  "version": "1.0.0",
+  "description": "A style assistant to help you with every design",
+  "permissions": ["activeTab", "scripting", "tabs"],
+  "host_permissions": ["<all_urls>"],
+  "action": {
+    "default_popup": "app.html",
+    "default_title": "MyStyli"
+  },
+  "icons": {
+    "16": "icon.png",
+    "48": "icon.png",
+    "128": "icon.png"
+  }
+}
